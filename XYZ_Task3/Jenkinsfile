@@ -41,15 +41,14 @@ pipeline {
                     def imageName = "${env.DOCKER_USERNAME}/${env.APP_NAME}"
                     def dockerImage = docker.build(imageName, "-f Dockerfile .")
 
-                    // Use the withCredentials block to securely access the secret text credential
-                    withCredentials([string(credentialsId: 'dockerhub_token_credentials', variable: 'DOCKER_PASSWORD')]) {
-                        docker.withRegistry("https://${env.DOCKER_REGISTRY}", "${env.DOCKER_USERNAME}:${DOCKER_PASSWORD}") {
-                            dockerImage.push("latest")
+                    // Use the 'dockerhub_push_credentials' which is of type Username with password
+                    // and contains 'demsdocker' as username and the access token as password.
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY}", 'dockerhub_push_credentials') {
+                        dockerImage.push("latest")
                     }
+                    echo "Successfully built and uploaded to DockerHub"
                 }
-                echo "Successfully built and uploaded to DockerHub"
             }
-        }
         }
 
         // This stage is optional if your goal is only K8s deployment
