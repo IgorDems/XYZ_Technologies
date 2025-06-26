@@ -59,13 +59,13 @@ pipeline {
         }
 
         // ***** NEW STAGE FOR KUBERNETES DEPLOYMENT *****
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    sh 'ansible-playbook ansible/ansibleK8s.yml --connection=local'
-                    echo "Successfully deployed application to Kubernetes cluster"
-                }
-            }
-        }
+        // stage('Deploy to Kubernetes') {
+        //     steps {
+        //         script {
+        //             sh 'ansible-playbook ansible/ansibleK8s.yml --connection=local'
+        //             echo "Successfully deployed application to Kubernetes cluster"
+        //         }
+        //     }
+        // }
     }
 }
