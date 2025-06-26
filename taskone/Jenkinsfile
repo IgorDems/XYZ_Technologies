@@ -8,7 +8,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/IgorDems/XYZ_Technologies.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/xyz_tech_tusck1']], 
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/IgorDems/XYZ_Technologies.git',
+                        credentialsId: 'GITHUB'
+                    ]]
+                ])
             }
         }
 
