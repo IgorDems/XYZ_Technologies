@@ -1,0 +1,91 @@
+pipeline {
+    agent {
+        label 'agent193'
+    }
+    
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub_credentials')
+        DOCKER_REGISTRY = 'docker.io'
+        NAMESPACE = 'xyz-tech'
+        APP_NAME = 'xyztechnologies'
+        JAVA_HOME = '/usr/lib/jvm/jdk-21-oracle-x64'
+        PATH = "$JAVA_HOME/bin:/usr/share/maven/bin:${env.PATH}"
+        MAVEN_HOME = '/usr/share/maven'
+        MAVEN_OPTS = '-Dmaven.repo.local=/var/jenkins-agent/.m2/repository'
+    }
+    
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    try {
+                        // Print environment info for debugging
+                        sh '''
+                            echo "Java version:"
+                            java -version
+                            echo "Maven version:"
+                            mvn -version
+                            echo "Current directory:"
+                            pwd
+                            echo "Directory contents:"
+                            ls -la
+                        '''
+                        
+                        // Clean and build with explicit Maven path
+                        sh '''
+                            /usr/bin/mvn clean install \
+                                -Dmaven.test.skip=true \
+                                -Dmaven.repo.local=/var/jenkins-agent/.m2/repository
+                        '''
+                    } catch (Exception e) {
+                        echo "Maven build failed: ${e.getMessage()}"
+                        throw e
+                    }
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def dockerImage = docker.build('xyztechnologies', '-f Dockerfile .')
+                }       
+            }
+        }  
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                        sh "docker tag xyztechnologies $DOCKER_USERNAME/xyztechnologies"
+                        sh "docker push $DOCKER_USERNAME/xyztechnologies"
+                        echo "Successfully built and uploaded to DockerHub"
+                    }
+                }
+            }
+        }
+
+        stage('Pull Docker Image and start Docker container') {
+            steps {
+                script {
+                    sh 'ansible-playbook ansible/ansibleDocCont.yml --connection=local'
+                    echo "Successfully pull from DockerHub and start container"
+                }
+            }
+        }
+    }
+
+}
