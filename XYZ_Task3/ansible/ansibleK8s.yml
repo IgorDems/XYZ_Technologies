@@ -16,4 +16,4 @@
         image: demsdocker/xyz-app
         state: started
         ports:
-          - "1234:8080"
+          - "8080:8080"
