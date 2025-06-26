@@ -4,9 +4,6 @@ pipeline {
     }
     
     environment {
-        // This variable is no longer needed for the docker.withRegistry step,
-        // but can be kept if used elsewhere. For this fix, we will remove it
-        // to avoid confusion.
         DOCKER_REGISTRY = 'docker.io'
         NAMESPACE = 'xyz-tech'
         APP_NAME = 'xyztechnologies'
@@ -44,8 +41,8 @@ pipeline {
                     def imageName = "${env.DOCKER_USERNAME}/${env.APP_NAME}"
                     def dockerImage = docker.build(imageName, "-f Dockerfile .")
                     
-                    // Use the credential ID string directly
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}}", 'dockerhub_credentials') {
+                    // Use the credential ID string directly and fix the URL typo
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY}", 'dockerhub_credentials') {
                         dockerImage.push("latest")
                     }
                     echo "Successfully built and uploaded to DockerHub"
