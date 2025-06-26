@@ -21,7 +21,7 @@ pipeline {
 
         stage('Build') {
             tools {
-                maven 'Maven' // Use Maven tool if configured in Jenkins, otherwise rely on PATH
+                maven 'maven' // Use Maven tool if configured in Jenkins, otherwise rely on PATH
             }
             steps {
                 script {
