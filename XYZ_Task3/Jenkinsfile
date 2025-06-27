@@ -6,9 +6,11 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'docker.io'
         NAMESPACE = 'xyz-tech'
-        APP_NAME = 'xyztechnologies'
-        // Assuming your Docker Hub username is 'demsdocker'
-        DOCKER_USERNAME = 'demsdocker' 
+        // APP_NAME = 'xyztechnologies'
+        // // Assuming your Docker Hub username is 'demsdocker'
+        // DOCKER_USERNAME = 'demsdocker' 
+        DOCKER_IMAGE = "xyztechnologies"
+        DOCKER_HUB = "demsdocker"
     }
     
     stages {
@@ -34,24 +36,26 @@ pipeline {
             }
         }
 
-        stage('Build and Push Docker Image') {
+         stage('Build Docker Image') {
             steps {
                 script {
-                    // Define the image name
-                    def imageName = "${env.DOCKER_USERNAME}/${env.APP_NAME}"
-                    def dockerImage = docker.build(imageName, "-f Dockerfile .")
-
-                    // Use the 'dockerhub_push_credentials' which is of type Username with password
-                    // and contains 'demsdocker' as username and the access token as password.
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}", 'dockerhub_push_credentials') {
-                        dockerImage.push("latest")
-                    }
-                    echo "Successfully built and uploaded to DockerHub"
+                    sh "docker build -t ${DOCKER_IMAGE} ."
                 }
             }
         }
 
-        // This stage is optional if your goal is only K8s deployment
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub_credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                    sh "docker tag ${DOCKER_IMAGE} ${DOCKER_HUB}/${DOCKER_IMAGE}"
+                    sh "docker push ${DOCKER_HUB}/${DOCKER_IMAGE}"
+                }
+                echo "Successfully built and uploaded to DockerHub"
+            }
+        }
+
+
         stage('Run Docker container locally') {
             steps {
                 script {
