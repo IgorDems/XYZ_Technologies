@@ -28,9 +28,9 @@ RUN mkdir -p /opt/tomcat
 # Install required packages and download stable Tomcat 9 manually
 RUN apt-get update && \
     apt-get install -y wget curl openjdk-17-jdk && \
-    wget https://downloads.apache.org/tomcat/tomcat-9/v9.0.85/bin/apache-tomcat-9.0.85.tar.gz && \
-    tar -xzf apache-tomcat-9.0.85.tar.gz -C /opt/tomcat --strip-components=1 && \
-    rm apache-tomcat-9.0.85.tar.gz && \
+    wget https://downloads.apache.org/tomcat/tomcat-9/v9.0.106/bin/apache-tomcat-9.0.106.tar.gz && \
+    tar -xzf apache-tomcat-9.0.106.tar.gz -C /opt/tomcat --strip-components=1 && \
+    rm apache-tomcat-9.0.106.tar.gz && \
     chmod +x /opt/tomcat/bin/*.sh
 
 # Copy your WAR application to the Tomcat webapps directory
