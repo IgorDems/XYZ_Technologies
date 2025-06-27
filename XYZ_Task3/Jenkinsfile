@@ -59,7 +59,7 @@ pipeline {
         stage('Run Docker container locally') {
             steps {
                 script {
-                    sh 'ansible-playbook ansible/ansibleDocCont.yml --connection=local'
+                    sh 'ansible-playbook XYZ_Task3/ansible/ansibleDocCont.yml --connection=local'
                     echo "Successfully pulled from DockerHub and started container locally"
                 }
             }
