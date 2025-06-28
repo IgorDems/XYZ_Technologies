@@ -5,10 +5,7 @@ pipeline {
     
     environment {
         DOCKER_REGISTRY = 'docker.io'
-        NAMESPACE = 'xyz-tech'
-        // APP_NAME = 'xyztechnologies'
-        // // Assuming your Docker Hub username is 'demsdocker'
-        // DOCKER_USERNAME = 'demsdocker' 
+        // NAMESPACE = 'xyz-tech'
         DOCKER_IMAGE = "xyztechnologies"
         DOCKER_HUB = "demsdocker"
     }
