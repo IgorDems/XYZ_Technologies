@@ -2,14 +2,16 @@ pipeline {
     agent {
         label 'agent193'
     }
-    
+
     environment {
         DOCKER_REGISTRY = 'docker.io'
-        // NAMESPACE = 'xyz-tech'
         DOCKER_IMAGE = "xyztechnologies"
         DOCKER_HUB = "demsdocker"
+        APP_PORT = "8080"           // порт Tomcat у контейнері
+        HOST_PORT = "8081"          // порт, на якому expose контейнер (налаштовано у Ansible)
+        TOMCAT_APP_PATH = "XYZtechnologies-1.0" // назва .war без розширення
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
@@ -19,12 +21,10 @@ pipeline {
 
         stage('Build') {
             tools {
-                maven 'maven' // Use Maven tool if configured in Jenkins
+                maven 'maven'
             }
             steps {
-                script {
-                    sh 'mvn clean install -Dmaven.test.skip=true'
-                }
+                sh 'mvn clean install -Dmaven.test.skip=true'
             }
             post {
                 success {
@@ -33,11 +33,9 @@ pipeline {
             }
         }
 
-         stage('Build Docker Image') {
+        stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${DOCKER_IMAGE} ."
-                }
+                sh "docker build -t ${DOCKER_IMAGE} ."
             }
         }
 
@@ -52,24 +50,41 @@ pipeline {
             }
         }
 
-
         stage('Run Docker container locally') {
             steps {
+                sh 'ansible-playbook XYZ_Task3/ansible/ansibleDocCont.yml --connection=local'
+                echo "Successfully pulled from DockerHub and started container locally"
+            }
+        }
+
+        stage('Post-deploy: Check App Deployment in Tomcat') {
+            steps {
                 script {
-                    sh 'ansible-playbook XYZ_Task3/ansible/ansibleDocCont.yml --connection=local'
-                    echo "Successfully pulled from DockerHub and started container locally"
+                    echo "Waiting for Tomcat to start..."
+                    sleep 10
+
+                    echo "Checking deployed app in Tomcat..."
+                    sh '''
+                        status_code=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:${HOST_PORT}/${TOMCAT_APP_PATH}/)
+                        if [ "$status_code" != "200" ]; then
+                            echo "❌ Application not available at http://localhost:${HOST_PORT}/${TOMCAT_APP_PATH}/"
+                            exit 1
+                        else
+                            echo "✅ Application successfully deployed to Tomcat at http://localhost:${HOST_PORT}/${TOMCAT_APP_PATH}/"
+                        fi
+                    '''
                 }
             }
         }
 
-        // Uncomment this stage to enable Kubernetes deployment
-        // stage('Deploy to Kubernetes') {
-        //     steps {
-        //         script {
-        //             sh 'ansible-playbook ansible/ansibleK8s.yml --connection=local'
-        //             echo "Successfully deployed application to Kubernetes cluster"
-        //         }
-        //     }
-        // }
+       
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    sh 'ansible-playbook ansible/ansibleK8s.yml --connection=local'
+                    echo "Successfully deployed application to Kubernetes cluster"
+                }
+            }
+        }
     }
 }
