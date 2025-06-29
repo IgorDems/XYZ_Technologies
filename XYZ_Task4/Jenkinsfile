@@ -79,12 +79,36 @@ pipeline {
 
        
         stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    sh 'ansible-playbook XYZ_Task4/ansible/ansibleK8s.yml --connection=local'
-                    echo "Successfully deployed application to Kubernetes cluster"
+             steps {
+                withKubeConfig([credentialsId: 'certificate_file']) {
+                    sh 'kubectl get nodes'
+                    sh 'kubectl create namespace xyz-tech --dry-run=client -o yaml | kubectl apply -f -'
+                    sh 'kubectl create namespace metallb-system --dry-run=client -o yaml | kubectl apply -f -'
+                    sh 'kubectl apply -f k8s/rbac.yml'
+                    sh 'kubectl apply -f k8s/deployment.yml'
+                    sh 'kubectl apply -f k8s/service.yml'
+
+                    // ❗ FIXED LINE
+                    sh 'kubectl rollout status deployment/xyz-tech-deployment -n xyz-tech --timeout=900s'
                 }
             }
+        }
+        stage('Check Deployed App') {
+            steps {
+                withKubeConfig([credentialsId: 'certificate_file']) {
+                    sh 'kubectl get pods -n xyz-tech'
+                    sh 'kubectl describe pods -n xyz-tech -l app=xyz-tech-app'
+                    sh 'kubectl logs -n xyz-tech -l xyz=xyz-tech-app --all-containers --tail=100'
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            echo '❌ Deployment failed.'
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
         }
     }
 }
