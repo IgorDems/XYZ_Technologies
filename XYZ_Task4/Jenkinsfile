@@ -81,7 +81,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    sh 'ansible-playbook ansible/ansibleK8s.yml --connection=local'
+                    sh 'ansible-playbook XYZ_Task4/ansible/ansibleK8s.yml --connection=local'
                     echo "Successfully deployed application to Kubernetes cluster"
                 }
             }
