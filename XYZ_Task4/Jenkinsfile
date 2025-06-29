@@ -87,7 +87,7 @@ pipeline {
                     sh 'kubectl apply -f XYZ_Task4/k8s/rbac.yml'
                     sh 'kubectl apply -f XYZ_Task4/k8s/deployment.yml'
                     sh 'kubectl apply -f XYZ_Task4/k8s/service.yml'
-                    sh 'kubectl rollout status deployment/xyz-tech-deployment -n xyz-tech --timeout=900s'
+                    sh 'kubectl rollout status deployment/xyztechnologies-deployment -n xyz-tech --timeout=900s'
                 }
             }
         }
