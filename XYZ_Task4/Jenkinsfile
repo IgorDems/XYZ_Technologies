@@ -7,9 +7,9 @@ pipeline {
         DOCKER_REGISTRY = 'docker.io'
         DOCKER_IMAGE = "xyztechnologies"
         DOCKER_HUB = "demsdocker"
-        APP_PORT = "8080"           // порт Tomcat у контейнері
-        HOST_PORT = "8081"          // порт, на якому expose контейнер (налаштовано у Ansible)
-        TOMCAT_APP_PATH = "XYZtechnologies-1.0" // назва .war без розширення
+        APP_PORT = "8080"           
+        HOST_PORT = "8081"       
+        TOMCAT_APP_PATH = "XYZtechnologies-1.0" 
     }
 
     stages {
