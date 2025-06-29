@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xyztechnologies-deployment
+  namespace: xyz-tech
+  labels:
+    app: xyztechnologies
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: xyztechnologies
+  template:
+    metadata:
+      labels:
+        app: xyztechnologies
+    spec:
+      containers:
+        - name: xyztechnologies
+          image: demsdocker/xyztechnologies:latest # Make sure this matches your Docker Hub repo
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
