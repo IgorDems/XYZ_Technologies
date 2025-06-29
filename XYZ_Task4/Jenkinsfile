@@ -1,0 +1,75 @@
+pipeline {
+    agent {
+        label 'agent193'
+    }
+    
+    environment {
+        DOCKER_REGISTRY = 'docker.io'
+        // NAMESPACE = 'xyz-tech'
+        DOCKER_IMAGE = "xyztechnologies"
+        DOCKER_HUB = "demsdocker"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            tools {
+                maven 'maven' // Use Maven tool if configured in Jenkins
+            }
+            steps {
+                script {
+                    sh 'mvn clean install -Dmaven.test.skip=true'
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
+                }
+            }
+        }
+
+         stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub_credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                    sh "docker tag ${DOCKER_IMAGE} ${DOCKER_HUB}/${DOCKER_IMAGE}"
+                    sh "docker push ${DOCKER_HUB}/${DOCKER_IMAGE}"
+                }
+                echo "Successfully built and uploaded to DockerHub"
+            }
+        }
+
+
+        stage('Run Docker container locally') {
+            steps {
+                script {
+                    sh 'ansible-playbook XYZ_Task3/ansible/ansibleDocCont.yml --connection=local'
+                    echo "Successfully pulled from DockerHub and started container locally"
+                }
+            }
+        }
+
+        // Uncomment this stage to enable Kubernetes deployment
+        // stage('Deploy to Kubernetes') {
+        //     steps {
+        //         script {
+        //             sh 'ansible-playbook ansible/ansibleK8s.yml --connection=local'
+        //             echo "Successfully deployed application to Kubernetes cluster"
+        //         }
+        //     }
+        // }
+    }
+}
