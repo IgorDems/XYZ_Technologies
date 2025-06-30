@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: xyztechnologies
-          image: demsdocker/xyztechnologies:latest # Make sure this matches your Docker Hub repo
+          image: demsdocker/xyztechnologies:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
