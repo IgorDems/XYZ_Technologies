@@ -95,8 +95,8 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'certificate_file']) {
                     sh 'kubectl get pods -n xyz-tech'
-                    sh 'kubectl describe pods -n xyz-tech -l app=xyz-tech-app'
-                    sh 'kubectl logs -n xyz-tech -l app=xyz-tech-app --all-containers --tail=100'
+                    sh 'kubectl describe pods -n xyz-tech -l app=xyztechnologies'
+                    sh 'kubectl logs -n xyz-tech -l app=xyztechnologies --all-containers --tail=100'
                 }
             }
         }
