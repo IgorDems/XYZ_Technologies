@@ -4,10 +4,10 @@ metadata:
   name: xyztechnologies-service
   namespace: xyz-tech
 spec:
+  type: LoadBalancer  # Change from NodePort to LoadBalancer
   selector:
-    app: xyztechnologies
+    app: xyztechnologies  
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080
-  type: NodePort
+    - port: 80
+      targetPort: 8080  
+      protocol: TCP
