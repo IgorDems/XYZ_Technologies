@@ -2,7 +2,7 @@
 - hosts: localhost
   become: yes
   vars:
-    docker_username: "demsdocker" # Replace with your Docker Hub username
+    docker_username: "demsdocker" 
     app_name: "xyztechnologies"
   tasks:
     - name: Pull latest image from Docker Hub
@@ -22,4 +22,4 @@
         image: "{{ docker_username }}/{{ app_name }}:latest"
         state: started
         ports:
-          - "8081:8080" # Mapping to 8081 to avoid conflicts
+          - "8081:8080" 

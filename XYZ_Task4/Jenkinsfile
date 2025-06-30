@@ -2,14 +2,16 @@ pipeline {
     agent {
         label 'agent193'
     }
-    
+
     environment {
         DOCKER_REGISTRY = 'docker.io'
-        // NAMESPACE = 'xyz-tech'
         DOCKER_IMAGE = "xyztechnologies"
         DOCKER_HUB = "demsdocker"
+        APP_PORT = "8080"           
+        HOST_PORT = "8081"       
+        TOMCAT_APP_PATH = "XYZtechnologies-1.0" 
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
@@ -19,12 +21,10 @@ pipeline {
 
         stage('Build') {
             tools {
-                maven 'maven' // Use Maven tool if configured in Jenkins
+                maven 'maven'
             }
             steps {
-                script {
-                    sh 'mvn clean install -Dmaven.test.skip=true'
-                }
+                sh 'mvn clean install -Dmaven.test.skip=true'
             }
             post {
                 success {
@@ -33,11 +33,9 @@ pipeline {
             }
         }
 
-         stage('Build Docker Image') {
+        stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${DOCKER_IMAGE} ."
-                }
+                sh "docker build -t ${DOCKER_IMAGE} ."
             }
         }
 
@@ -52,24 +50,63 @@ pipeline {
             }
         }
 
-
         stage('Run Docker container locally') {
             steps {
+                sh 'ansible-playbook XYZ_Task3/ansible/ansibleDocCont.yml --connection=local'
+                echo "Successfully pulled from DockerHub and started container locally"
+            }
+        }
+
+        stage('Post-deploy: Check App Deployment in Tomcat') {
+            steps {
                 script {
-                    sh 'ansible-playbook XYZ_Task3/ansible/ansibleDocCont.yml --connection=local'
-                    echo "Successfully pulled from DockerHub and started container locally"
+                    echo "Waiting for Tomcat to start..."
+                    sleep 10
+
+                    echo "Checking deployed app in Tomcat..."
+                    sh '''
+                        status_code=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:${HOST_PORT}/${TOMCAT_APP_PATH}/)
+                        if [ "$status_code" != "200" ]; then
+                            echo "❌ Application not available at http://localhost:${HOST_PORT}/${TOMCAT_APP_PATH}/"
+                            exit 1
+                        else
+                            echo "✅ Application successfully deployed to Tomcat at http://localhost:${HOST_PORT}/${TOMCAT_APP_PATH}/"
+                        fi
+                    '''
                 }
             }
         }
 
-        // Uncomment this stage to enable Kubernetes deployment
-        // stage('Deploy to Kubernetes') {
-        //     steps {
-        //         script {
-        //             sh 'ansible-playbook ansible/ansibleK8s.yml --connection=local'
-        //             echo "Successfully deployed application to Kubernetes cluster"
-        //         }
-        //     }
-        // }
+       
+        stage('Deploy to Kubernetes') {
+             steps {
+                withKubeConfig([credentialsId: 'certificate_file']) {
+                    sh 'kubectl get nodes'
+                    sh 'kubectl create namespace xyz-tech --dry-run=client -o yaml | kubectl apply -f -'
+                    sh 'kubectl create namespace metallb-system --dry-run=client -o yaml | kubectl apply -f -'
+                    sh 'kubectl apply -f XYZ_Task4/k8s/rbac.yml'
+                    sh 'kubectl apply -f XYZ_Task4/k8s/deployment.yml'
+                    sh 'kubectl apply -f XYZ_Task4/k8s/service.yml'
+                    sh 'kubectl rollout status deployment/xyztechnologies-deployment -n xyz-tech --timeout=900s'
+                }
+            }
+        }
+        stage('Check Deployed App') {
+            steps {
+                withKubeConfig([credentialsId: 'certificate_file']) {
+                    sh 'kubectl get pods -n xyz-tech'
+                    sh 'kubectl describe pods -n xyz-tech -l app=xyz-tech-app'
+                    sh 'kubectl logs -n xyz-tech -l xyz=xyz-tech-app --all-containers --tail=100'
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            echo '❌ Deployment failed.'
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
     }
 }
